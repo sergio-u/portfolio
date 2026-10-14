@@ -1,0 +1,11 @@
+# WARNING (not exported): herdr-agent-state: no Git provenance (local-only or pre-metadata install) — listed as a comment, not installable from this pack.
+# WARNING (not exported): web: no Git provenance (local-only or pre-metadata install) — listed as a comment, not installable from this pack.
+name: my-hermes-pack
+description: Exported by `hermes plugins pack export`.
+version: 1.0.0
+plugins:
+  - repo: vectorize-io/hindsight
+    ref: d56c4acdf59c41957613d399094cdf8c489b060c
+    subdir: hindsight-integrations/hermes
+  - repo: NousResearch/hermes-homeassistant
+    ref: ba30cb0cf86c52bdb5cde98974bc062e97966529

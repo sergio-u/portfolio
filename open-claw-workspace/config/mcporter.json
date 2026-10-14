@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "homeassistant": {
+      "url": "${HOME_ASSISTANT_URL}/mcp_server/sse",
+      "headers": {
+        "Authorization": "Bearer ${HOME_ASSISTANT_TOKEN}"
+      },
+      "env": {
+        "HOME_ASSISTANT_TOKEN": "${HOME_ASSISTANT_TOKEN}"
+      }
+    },
+    "todoist": {
+      "command": "npx -y @doist/todoist-ai",
+      "env": {
+        "TODOIST_API_KEY": "${TODOIST_API_KEY}"
+      }
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      },
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      }
+    }
+  },
+  "imports": []
+}

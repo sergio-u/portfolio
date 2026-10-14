@@ -1,0 +1,26 @@
+---
+title: jj sentinel commit - local vs pushed view
+---
+flowchart LR
+  subgraph LOCAL["Local jj history on feature/a"]
+    direction TB
+    L1["origin/main"]
+    L2["work commit 1"]
+    L3["work commit 2"]
+    L4["sentinel commit<br/>description: [memory]<br/>contains .memory/config.toml<br/>([state].projects + [state].plan<br/>+ [overrides] + [repo].name)"]
+    L5["@ working copy"]
+    L1 --> L2 --> L3 --> L4 --> L5
+  end
+
+  subgraph PUSHED["After jj git push: origin/feature/a"]
+    direction TB
+    R1["origin/main"]
+    R2["work commit 1"]
+    R3["work commit 2"]
+    R1 --> R2 --> R3
+  end
+
+  LOCAL -. "jj git push filters<br/>git.private-commits revset:<br/>description(glob:'[memory]*')" .-> PUSHED
+
+  classDef sentinel fill:#fff4d6,stroke:#c89b00,stroke-width:2px
+  class L4 sentinel

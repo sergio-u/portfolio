@@ -1,0 +1,54 @@
+---
+title: Memory Gateway - basic auto, full on /set-context
+---
+sequenceDiagram
+  autonumber
+  actor User
+  participant PI as PI runtime
+  participant Ext as Memory Extension
+  participant GCfg as ~/.pi/memory/config.toml
+  participant Sent as .memory/config.toml
+  participant Vault as 80_AI/ Vault
+  participant LLM
+
+  rect rgb(245,245,250)
+    Note over PI,LLM: Session start - cheap, auto, basic context
+    PI->>Ext: session_start
+    Ext->>GCfg: load global config
+    Ext->>Sent: load sentinel state
+    Ext->>Vault: stat .last_dream.marker
+    Note over Ext: build basic block:<br/>repo, project, plan, domains, dream status
+    Ext->>PI: append memory-gateway entry
+    PI->>Ext: before_agent_start
+    Ext->>PI: return systemPrompt + gateway
+    PI->>LLM: chat with basic memory state
+  end
+
+  Note over User: User wants full memory awareness
+
+  rect rgb(245,250,245)
+    Note over User,LLM: /set-context - manual, full gateway
+    User->>PI: /set-context [project[/plan]]
+    PI->>Ext: handler invoked
+
+    alt args provided
+      Ext->>Sent: update project/plan state
+    end
+
+    alt path was / or ~
+      Ext->>Sent: clear state
+      Note over Ext: revert to basic - no active project
+    else
+      Ext->>Vault: read project.md
+      Ext->>Vault: read last N lines of notes.md
+      Ext->>Vault: read active plan.md
+      Ext->>Vault: read active domain pages
+      Note over Ext: assemble full gateway within token budget
+      Ext->>PI: append full memory-gateway entry
+      PI->>LLM: next turn includes full gateway
+    end
+
+    Ext-->>User: context loaded - project, plan, domains
+  end
+
+  Note over User,LLM: Re-run /set-context to refresh after external edits.

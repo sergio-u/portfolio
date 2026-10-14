@@ -1,0 +1,20 @@
+{
+  "package_id": "com.sergiou.subtitlesg2",
+  "edition": "202601",
+  "name": "Subtitles G2",
+  "version": "0.1.1",
+  "min_app_version": "2.2.6",
+  "min_sdk_version": "0.0.13",
+  "entrypoint": "index.html",
+  "supported_languages": ["en"],
+  "permissions": [
+    {
+      "name": "g2-microphone",
+      "desc": "Capture short audio windows to synchronize subtitles; cloud mode sends them to Soniox with consent."
+    },
+    {
+      "name": "phone-microphone",
+      "desc": "Alternative microphone when the glasses mic is unavailable."
+    }
+  ]
+}

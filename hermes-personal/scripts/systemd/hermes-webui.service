@@ -1,0 +1,18 @@
+[Unit]
+Description=Hermes Web UI (nesquena/hermes-webui, localhost only)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=%h/hermes-webui
+Environment="HERMES_HOME=%h/.hermes"
+ExecStart=/bin/bash %h/hermes-webui/start.sh --foreground
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

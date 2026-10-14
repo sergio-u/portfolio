@@ -1,0 +1,6 @@
+{
+  "mode": "cloud",
+  "api_url": "https://<hindsight-host>",
+  "bank_id": "hermes-personal",
+  "retain_tags": ["ctx:personal", "source:hermes"]
+}

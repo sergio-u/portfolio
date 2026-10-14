@@ -1,0 +1,92 @@
+# pi-memory global configuration.
+# Copy to ~/.pi/memory/config.toml and edit. The extension reads it at startup.
+# Per-repo overrides + active state live in <repo>/.memory/config.toml.
+# The extension just reads/writes that file in the working tree — VCS handling
+# (committing, scrubbing pre-push, etc.) is the user's responsibility.
+# See README for the recommended jj sentinel-commit workflow.
+#
+# Sentinel-only operation: every section below can be overridden in the
+# per-repo sentinel under `[overrides.<section>]` (e.g. `[overrides.vault]`,
+# `[overrides.dream]`, `[overrides.anythingllm]`). The global file is
+# optional — if you set `[overrides.vault].root` in the sentinel, the
+# extension works without ever touching ~/.pi/memory/config.toml. Useful
+# for tests and for repos that should write to a dedicated vault.
+#
+# A per-repo sentinel can also declare active context:
+# [state]
+# projects = ["my-project"]
+# plan = ""
+# domains = ["csharp"]
+# If 80_AI/domains/<repo>.md exists, it is loaded automatically too.
+
+[vault]
+# Absolute path to the Obsidian vault root the extension writes into.
+# Update twice a year if you partition by half-year (e.g. ".../2026-H1" → ".../2026-H2").
+root              = "/Users/YOU/Documents/Sync/Notebook/2026-H1"
+
+# Subfolder under [vault].root where all extension-managed content lives.
+ai_folder         = "80_AI"
+
+# Subfolder for weekly notes — used as the no-active-project inbox fallback.
+weekly_folder     = "10_Weekly"
+
+# Filename format for weekly notes (strftime). Default is ISO week → "2026-W21".
+weekly_filename   = "%Y-W%V"
+
+# Section in the weekly note where /note captures go when no project is active.
+weekly_inbox      = "## Inbox"
+
+# Optional path (relative to [vault].root) to the template copied when creating
+# a new weekly note. If missing, the extension writes a minimal stub.
+weekly_template   = "99_System/Templates/Memory/Weekly Memory Inbox.md"
+
+[capture]
+on_pre_compact      = true   # auto-capture at session_before_compact
+on_session_shutdown = true   # update internal checkpoint marker at session shutdown
+model               = "default"  # use session model, or "claude-sonnet-4-6", etc.
+max_observations    = 3      # upper bound per checkpoint
+
+[dream]
+enabled                       = true
+days_between                  = 15      # cadence; notify-on-overdue uses this
+notify_on_overdue             = true
+max_idea_suggestions          = 5
+notes_size_threshold_lines    = 500     # summarise+archive at this size
+notes_size_threshold_tokens   = 20000
+auto_create_domains           = true    # Dream may propose new domains/<tag>.md files
+scope                         = ["80_AI", "10_Weekly"]  # Dream read scope
+
+[note]
+smart_routing       = true   # LLM-mediated multi-target routing (Phase 3+)
+auto_create_domains = false  # /note may NOT spawn new domain files
+multi_target        = true   # router may write to multiple targets
+
+[gateway]
+notes_tail_lines = 50        # how many recent notes lines to include in full gateway
+token_budget     = 5000      # full gateway target size
+
+[dump]
+group_by_day = true          # /dump writes under ### YYYY-MM-DD in weekly inbox
+include_time  = false        # set true to prefix dump entries with [HH:MM]
+ingest_model  = "default"    # "default" = current model; "provider/model-id" = specific model; "" = raw fallback only
+
+[organize]
+default_window_days                = 30    # /organize-dump default review window
+min_items_for_domain_suggestion    = 3     # suggest a new domain only after repeated evidence
+auto_create_domains                = false # never create domains during dry-run review
+prefer_existing_domains            = true  # route matches to existing domains first
+copy_not_move                      = true  # future apply mode should copy before deleting from inbox
+
+[anythingllm]
+workspace       = "my-workspace"  # AnythingLLM workspace name (slug)
+default_mode    = "grep"          # /recall default: "grep" | "semantic" | "hybrid"
+score_threshold = 0.2             # vector-search scoreThreshold; chunks below are dropped
+top_n           = 8               # vector-search topN per query
+# Host and API key can be set here or via env vars. Env vars win.
+# Prefer env vars or ~/.pi/memory/config.toml for API keys; avoid putting
+# secrets in per-repo .memory/config.toml if it might be committed.
+# host    = "http://localhost:3001"
+# api_key = "..."
+# Equivalent env vars:
+#   export ANYTHINGLLM_HOST="http://localhost:3001"
+#   export ANYTHINGLLM_API_KEY="..."

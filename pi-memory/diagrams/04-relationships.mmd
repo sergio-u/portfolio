@@ -1,0 +1,31 @@
+---
+title: Project / Domain / Plan relationships
+---
+flowchart LR
+  subgraph PROJECTS[projects]
+    P1[project: pi-memory]
+    P2[project: skill-dev]
+  end
+
+  subgraph DOMAINS["domains (cross-cutting; includes repos)"]
+    D1["csharp (topic)"]
+    D2["databases (topic)"]
+    D3["memory-systems (topic)"]
+    D4["pi-memory (repo)"]
+    D5["claude-config (repo)"]
+  end
+
+  subgraph PLANS[plans]
+    PL1[2026-05-21-v1-extension]
+    PL2[2026-05-15-skill-refactor]
+  end
+
+  P1 -.tags.-> D1
+  P1 -.tags.-> D3
+  P1 -.tags.-> D4
+  P2 -.tags.-> D1
+  P2 -.tags.-> D2
+  P2 -.tags.-> D5
+
+  P1 ==> PL1
+  P2 ==> PL2

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "registry": "https://clawhub.ai",
+  "slug": "ponytail",
+  "ownerHandle": "dietrichgebert",
+  "installedVersion": "4.8.4",
+  "installedAt": 1786035683372,
+  "artifact": {
+    "kind": "archive",
+    "sha256": "91072af3f20c3196327353d635702d1939b5b5d8d83a708c468e6306d223cce8",
+    "integrity": "sha256-kQcq8/IMMZYyc1PWNXAtGTm1tdjYOnCMRo5jBtIjzOg="
+  },
+  "skillFile": {
+    "path": "SKILL.md",
+    "sha256": "0537ff8d0ad12c88ece83f2aa4c906d12ddf526cd3da6df25171a99b3bd21e46"
+  }
+}

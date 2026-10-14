@@ -1,0 +1,14 @@
+[project]
+name = "openclaw-michelin-guide-skill"
+version = "0.1.0"
+description = "Live Michelin Guide search and enrichment helper for OpenClaw"
+requires-python = ">=3.11"
+dependencies = [
+  "beautifulsoup4>=4.12",
+  "lxml>=5.0",
+  "requests>=2.31",
+  "scrapling[all]>=0.4.2",
+]
+
+[tool.uv]
+package = false

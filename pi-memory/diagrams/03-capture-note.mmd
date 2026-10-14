@@ -1,0 +1,36 @@
+---
+title: /note and memory-note capture routing
+---
+sequenceDiagram
+  autonumber
+  actor User
+  participant PI as PI runtime
+  participant Skill as memory-note skill
+  participant Tools as memory_* tools
+  participant Vault as Vault (80_AI/ + 10_Weekly/)
+
+  Note over User,Skill: Entry paths:<br/>(a) user types /note &lt;text&gt;<br/>(b) user states capture intent and skill is auto-invoked
+
+  User->>PI: /note "text" or capture-intent prose
+
+  alt deterministic /note
+    PI->>Tools: resolve current target
+    Tools->>Vault: append formatted line
+  else smart routing
+    PI->>Skill: invoke memory-note skill
+    Skill->>Tools: memory_get_context()
+    Tools-->>Skill: active project + plan + domains
+    Skill->>Tools: memory_list_domains()
+    Tools-->>Skill: existing domain names
+    Note over Skill: decide target(s) from content + context
+    Skill->>Tools: memory_resolve_capture_target(current)
+    Skill->>Tools: memory_capture(target1, formatted_line)
+    alt content also fits a domain
+      Skill->>Tools: memory_resolve_capture_target(domain)
+      Skill->>Tools: memory_capture(target2, formatted_line)
+    end
+  end
+
+  Note over Tools,Vault: Routing precedence:<br/>1. plan active -> plan ## Log<br/>2. project active -> project notes.md<br/>3. no active project -> weekly inbox
+
+  Tools-->>User: noted under target path

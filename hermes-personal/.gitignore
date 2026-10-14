@@ -1,0 +1,64 @@
+# ~/.hermes - ALLOWLIST (sanitized portfolio copy of config, owned skills, scripts).
+# Everything is ignored unless re-included below. Pristine bundled skills and
+# catalog plugins aren't tracked; reinstall them from manifests/.
+/*
+!/.gitignore
+!/.env.example
+!/README.md
+
+# Core config
+!/config.yaml
+!/SOUL.md
+!/hindsight/
+/hindsight/*
+!/hindsight/config.json
+
+# User-authored hooks, skins, scripts (incl. systemd units, update script), manifests
+!/hooks/
+!/skins/
+!/scripts/
+!/manifests/
+
+# Plugins: local ones (homeassistant is a git checkout -> manifests/hermes-pack.yaml)
+!/plugins/
+/plugins/*
+!/plugins/herdr-agent-state/
+!/plugins/hindsight/
+!/plugins/web/
+/plugins/web/*
+!/plugins/web/trafilatura/
+
+# Skills: ours live in my-skills/ (skills.create_dir), tracked whole.
+# skills/ = pristine bundled + hub installs only (hermes update / manifests/skills-snapshot.json).
+# Never edit skills/ in place; put fixes in a companion skill (e.g. hermes-agent-local).
+!/my-skills/
+
+# Noise, even inside allowed dirs
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.lock
+.cache
+.cache/
+/my-skills/**/data/
+/my-skills/**/.sync_manifest.json
+scripts/*.state.json
+*.db
+*.db-*
+*.sqlite*
+
+# Secrets
+.env
+.env.*
+!/.env.example
+*.pem
+*.key
+auth.json
+*token*.json
+*credentials*.json
+*creds*
+*-session.json
+.*session*.json
+*password*.txt

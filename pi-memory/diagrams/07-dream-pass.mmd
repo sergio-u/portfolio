@@ -1,0 +1,45 @@
+---
+title: Dream pass - manual consolidation via subagent
+---
+sequenceDiagram
+  autonumber
+  participant User
+  participant Cmd as /dream command
+  participant Skill as memory-dream skill
+  participant SA as pi-subagents
+  participant Worker as Dream subagent<br/>(isolated context)
+  participant Vault as Vault (80_AI/ + 10_Weekly/)
+  participant Tools as memory_* tools
+
+  Note over User: Manual invocation only<br/>(notify at session_start if overdue)
+
+  User->>Cmd: /dream or /dream --dry-run
+  Cmd->>Skill: invoke memory-dream skill
+  Skill->>Vault: find files newer than .last_dream.marker
+  Note over Skill,Vault: First run: no marker means read everything in scope
+
+  Skill->>SA: spawn subagent with awake-period scope
+  SA->>Worker: launch with prompt + scoped files
+
+  Note over Worker: Worker runs in own context window
+
+  Worker->>Worker: phase 1 - resolve contradictions
+  Worker->>Worker: phase 2 - promote repeated themes to domains
+  Worker->>Worker: phase 3 - summarize + archive oversized notes
+  Worker->>Worker: phase 4 - enrich links + frontmatter
+  Worker->>Worker: phase 5 - surface ideas from session JSONLs
+
+  Worker-->>SA: structured edit plan + dreamlog section + ideas
+  SA-->>Skill: return summary
+
+  alt --dry-run
+    Skill-->>User: preview edit plan (no writes)
+  else
+    Skill->>Tools: apply edits through managed memory tools
+    Tools->>Vault: write changes
+    Skill->>Tools: append dreamlog section
+    Skill->>Vault: touch .last_dream.marker
+    Skill-->>User: dream complete
+  end
+
+  Note over Vault: All writes scoped to managed vault roots

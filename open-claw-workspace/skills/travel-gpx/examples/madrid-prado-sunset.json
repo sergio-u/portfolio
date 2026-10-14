@@ -1,0 +1,86 @@
+{
+  "name": "Madrid Prado Sunset Walk",
+  "city": "Madrid",
+  "date": "2026-07-01",
+  "theme": "Prado Sunset",
+  "description": "Prototype flexible walking spine for a Madrid travel day. Coordinates should be verified before use.",
+  "waypoints": [
+    {
+      "id": "atocha",
+      "name": "Atocha start",
+      "role": "start",
+      "lat": 40.4066,
+      "lon": -3.6908,
+      "notes": "Hotel-adjacent start area TBD. Replace with exact lodging/start point."
+    },
+    {
+      "id": "acid",
+      "name": "ACID Café",
+      "role": "coffee_primary",
+      "address": "C. de la Verónica, 9, Madrid",
+      "lat": 40.4139,
+      "lon": -3.6970,
+      "notes": "Specialty coffee near Prado/Las Letras; verify hours."
+    },
+    {
+      "id": "prado",
+      "name": "Museo Nacional del Prado",
+      "role": "main_event",
+      "address": "C. de Ruiz de Alarcón, 23, Madrid",
+      "lat": 40.4138,
+      "lon": -3.6921,
+      "notes": "Main museum anchor."
+    },
+    {
+      "id": "retiro",
+      "name": "Parque de El Retiro",
+      "role": "reset",
+      "lat": 40.4153,
+      "lon": -3.6844,
+      "notes": "Shade/reset segment after Prado."
+    },
+    {
+      "id": "debod",
+      "name": "Templo de Debod",
+      "role": "sunset",
+      "lat": 40.4240,
+      "lon": -3.7178,
+      "notes": "Sunset anchor; verify sunset timing/weather."
+    },
+    {
+      "id": "vistillas",
+      "name": "Jardín de las Vistillas",
+      "role": "sunset_backup",
+      "lat": 40.4133,
+      "lon": -3.7143,
+      "optional": true,
+      "notes": "Backup sunset / smoother La Latina ending."
+    },
+    {
+      "id": "cava_baja",
+      "name": "Cava Baja / La Latina",
+      "role": "dinner_zone",
+      "lat": 40.4124,
+      "lon": -3.7097,
+      "notes": "Dinner/tapas zone."
+    }
+  ],
+  "variants": [
+    {
+      "id": "core",
+      "name": "Core",
+      "waypoint_order": ["atocha", "acid", "prado", "retiro", "debod", "cava_baja"]
+    },
+    {
+      "id": "low-energy",
+      "name": "Low energy",
+      "waypoint_order": ["atocha", "acid", "prado", "retiro", "debod"],
+      "track_mode": "waypoints-only"
+    },
+    {
+      "id": "la-latina-smoother",
+      "name": "La Latina smoother ending",
+      "waypoint_order": ["atocha", "acid", "prado", "vistillas", "cava_baja"]
+    }
+  ]
+}

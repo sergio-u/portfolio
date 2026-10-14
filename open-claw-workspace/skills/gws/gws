@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Wrapper for gws — uses npx to always run the latest version.
+# GOOGLE_WORKSPACE_CLI_CREDENTIALS_FILE is set in ~/.openclaw/.env
+exec npx @googleworkspace/cli@latest "$@"

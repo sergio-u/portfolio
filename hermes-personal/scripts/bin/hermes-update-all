@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+# hermes-update-all: update Hermes and everything around it, then restart + health-check.
+#
+# Usage: hermes-update-all [targets...] [options]
+#
+# Targets (default: all of them):
+#   --hermes     Hermes Agent (gateway + dashboard + built-in skills)
+#   --skills     hub-installed skills        (hermes skills update)
+#   --plugins    catalog plugins w/ updates  (hermes plugins update <name>)
+#   --webui      Hermes WebUI git checkout   (~/hermes-webui)
+#
+# Options:
+#   --check        report available updates for the selected targets; change nothing
+#   --restart      skip updates; just restart + health-check
+#   --no-restart   apply updates but don't restart services
+#   --reset-webui  if the WebUI can't fast-forward, hard-reset it to upstream
+#   -h, --help
+#
+# Examples:
+#   hermes-update-all                    # everything
+#   hermes-update-all --check            # what's outdated, everywhere
+#   hermes-update-all --skills --plugins # only hub skills + plugins, then restart
+#
+# Not auto-updatable (no upstream): my-skills/, manual local plugins
+# (herdr-agent-state, web/trafilatura), ~/.agents symlinked skills.
+# Run from a normal shell: restarting the gateway kills in-flight Telegram turns.
+
+set -euo pipefail
+
+HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+WEBUI_DIR="$HOME/hermes-webui"
+SERVICES=(hermes-gateway hermes-dashboard hermes-webui)
+
+MODE=update; RESTART=1; RESET_WEBUI=0
+declare -A DO=()
+for arg in "$@"; do
+  case "$arg" in
+    --hermes|--skills|--plugins|--webui) DO[${arg#--}]=1 ;;
+    --check) MODE=check ;;
+    --restart) MODE=restart ;;
+    --no-restart) RESTART=0 ;;
+    --reset-webui) RESET_WEBUI=1 ;;
+    -h|--help) sed -n '2,26p' "$0"; exit 0 ;;
+    *) echo "unknown option: $arg (see --help)" >&2; exit 2 ;;
+  esac
+done
+if [[ ${#DO[@]} -eq 0 ]]; then DO=([hermes]=1 [skills]=1 [plugins]=1 [webui]=1); fi
+want() { [[ -n "${DO[$1]:-}" ]]; }
+
+say()  { printf '\n\033[1;36m==> %s\033[0m\n' "$*"; }
+warn() { printf '\033[1;33mWARN: %s\033[0m\n' "$*" >&2; }
+die()  { printf '\033[1;31mERROR: %s\033[0m\n' "$*" >&2; exit 1; }
+FAILED=()
+
+webui_branch() { git -C "$WEBUI_DIR" rev-parse --abbrev-ref HEAD; }
+
+# Catalog plugins with update_available=true, one name per line.
+outdated_plugins() {
+  hermes plugins check-updates --json 2>/dev/null | python3 -c '
+import json,sys
+try: data=json.load(sys.stdin)
+except Exception: sys.exit(0)
+for p in data:
+    if p.get("update_available") is True: print(p["name"])'
+}
+
+# Re-pin the WebUI to Hermes's *current* venv. Hermes rebuilds/renames it on update,
+# and a stale HERMES_WEBUI_PYTHON makes the WebUI crash-loop.
+repin_webui_python() {
+  local envfile="$WEBUI_DIR/.env" py
+  py=$(python3 - "$HERMES_HOME/installs" <<'EOF'
+import json,sys,glob,os
+for f in glob.glob(os.path.join(sys.argv[1],"*","facts.json")):
+    env=json.load(open(f)).get("packages",{}).get("venv",{}).get("environment")
+    if env and os.path.exists(env+"/bin/python"): print(env+"/bin/python"); break
+EOF
+)
+  [[ -n "$py" && -f "$envfile" ]] || return 0
+  if ! grep -qx "HERMES_WEBUI_PYTHON=$py" "$envfile"; then
+    sed -i "s|^HERMES_WEBUI_PYTHON=.*|HERMES_WEBUI_PYTHON=$py|" "$envfile"
+    echo "re-pinned WebUI python -> $py"
+  fi
+}
+
+# ---------- check ----------
+if [[ $MODE == check ]]; then
+  if want hermes; then say "Hermes Agent"; hermes update --check || true; fi
+  if want skills; then say "Hub skills"; hermes skills check || true; fi
+  if want plugins; then
+    say "Catalog plugins"
+    out=$(outdated_plugins)
+    if [[ -n $out ]]; then echo "updates available: $(echo $out)"; else echo "all up to date"; fi
+  fi
+  if want webui; then
+    say "Hermes WebUI"
+    git -C "$WEBUI_DIR" fetch -q --tags origin
+    b=$(webui_branch)
+    echo "current: $(git -C "$WEBUI_DIR" describe --tags --always HEAD)"
+    echo "latest:  $(git -C "$WEBUI_DIR" describe --tags --always "origin/$b")"
+    echo "behind:  $(git -C "$WEBUI_DIR" rev-list --count "HEAD..origin/$b") commits"
+  fi
+  exit 0
+fi
+
+# ---------- update ----------
+if [[ $MODE == update ]]; then
+  if want hermes; then
+    say "Updating Hermes Agent (gateway + dashboard + built-in skills)"
+    hermes update --no-gateway-restart || die "hermes update failed; nothing else touched"
+  fi
+
+  if want skills; then
+    say "Updating hub skills"
+    hermes skills update || { warn "hub skill update failed"; FAILED+=(skills); }
+    hermes skills snapshot export "$HERMES_HOME/manifests/skills-snapshot.json" >/dev/null 2>&1 || true
+  fi
+
+  if want plugins; then
+    say "Updating catalog plugins"
+    mapfile -t outdated < <(outdated_plugins)
+    [[ ${#outdated[@]} -eq 0 ]] && echo "all up to date"
+    for p in "${outdated[@]}"; do
+      echo "-- $p"
+      hermes plugins update "$p" || { warn "plugin $p failed"; FAILED+=("plugin:$p"); }
+    done
+    hermes plugins pack export > "$HERMES_HOME/manifests/hermes-pack.yaml" 2>/dev/null || true
+  fi
+
+  if want webui; then
+    say "Updating Hermes WebUI"
+    if [[ -n $(git -C "$WEBUI_DIR" status --porcelain --untracked-files=no) ]]; then
+      warn "WebUI has local edits; skipping pull"; FAILED+=(webui)
+    else
+      git -C "$WEBUI_DIR" fetch --tags origin
+      b=$(webui_branch); before=$(git -C "$WEBUI_DIR" describe --tags --always HEAD)
+      if ! git -C "$WEBUI_DIR" merge --ff-only "origin/$b"; then
+        if [[ $RESET_WEBUI == 1 ]]; then
+          echo "fast-forward impossible; resetting to origin/$b (was $before)"
+          git -C "$WEBUI_DIR" reset --hard "origin/$b"
+        else
+          warn "WebUI can't fast-forward (upstream rewritten?). Re-run: hermes-update-all --webui --reset-webui"
+          FAILED+=(webui)
+        fi
+      fi
+      echo "WebUI: $before -> $(git -C "$WEBUI_DIR" describe --tags --always HEAD)"
+    fi
+  fi
+fi
+
+# ---------- restart + health ----------
+if [[ $RESTART == 0 ]]; then
+  say "Skipping restart (--no-restart)"
+else
+  repin_webui_python
+  say "Restarting ${SERVICES[*]}"
+  systemctl --user daemon-reload
+  systemctl --user restart "${SERVICES[@]}"
+
+  say "Health checks"
+  wait_http() { # name url
+    local name=$1 url=$2 code
+    for _ in $(seq 1 30); do
+      code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 "$url" || true)
+      [[ $code =~ ^(2|3) ]] && { echo "ok   $name ($url -> $code)"; return 0; }
+      sleep 2
+    done
+    echo "FAIL $name ($url -> ${code:-no response})"; return 1
+  }
+  for s in "${SERVICES[@]}"; do
+    if systemctl --user is-active --quiet "$s"; then echo "ok   $s active"
+    else echo "FAIL $s not active"; FAILED+=("$s"); fi
+  done
+  wait_http dashboard http://127.0.0.1:9119/       || FAILED+=(dashboard-http)
+  wait_http webui     http://127.0.0.1:8787/health || FAILED+=(webui-http)
+fi
+
+if [[ ${#FAILED[@]} -gt 0 ]]; then
+  echo
+  echo "Problems: ${FAILED[*]}"
+  echo "Logs: journalctl --user -u hermes-gateway -u hermes-dashboard -u hermes-webui -n 50 --no-pager"
+  exit 1
+fi
+say "All good. Restart any open Hermes CLI sessions to load new code."

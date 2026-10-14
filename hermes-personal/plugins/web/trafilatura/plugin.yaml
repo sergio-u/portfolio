@@ -1,0 +1,7 @@
+name: web-trafilatura
+version: 0.1.0
+description: "Local trafilatura content extraction — extract-only, no API key, runs via uv. Pair with SearXNG for search."
+author: Sergio
+kind: backend
+provides_web_providers:
+  - trafilatura

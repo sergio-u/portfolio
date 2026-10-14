@@ -1,0 +1,73 @@
+---
+title: Memory Extension - architecture
+---
+flowchart TB
+  User((User))
+
+  subgraph PI[PI Agent runtime]
+    Hooks["Lifecycle hooks<br/>session_start<br/>before_agent_start<br/>session_before_compact<br/>session_shutdown"]
+    SlashCmds[Slash command registry]
+    Tools[Tool registry]
+    SkillDisc[Skill discovery]
+  end
+
+  subgraph Ext["Memory Extension package"]
+    direction TB
+    subgraph Cmds["9 slash commands"]
+      C1["/note"]
+      C2["/dump"]
+      C3["/organize-dump"]
+      C4["/recall"]
+      C5["/set-context"]
+      C6["/dream"]
+      C7["/checkpoint"]
+      C8["/memory-doctor"]
+      C9["/memory-bootstrap"]
+    end
+    subgraph ExtTools["10 tools"]
+      T1[memory_capture]
+      T2[memory_search]
+      T3[memory_set_context]
+      T4[memory_resolve_capture_target]
+      T5[memory_list_*]
+    end
+    subgraph Skills["4 skills"]
+      S1[memory-note]
+      S2[memory-recall]
+      S3[memory-dream]
+      S4[memory-checkpoint]
+    end
+  end
+
+  subgraph Vault["Obsidian vault (markdown only)"]
+    direction TB
+    AI["80_AI/<br/>projects/&lt;name&gt;/ (project.md, notes.md, plans/)<br/>domains/&lt;tag&gt;.md<br/>dreamlog.md"]
+    Weekly["10_Weekly/&lt;YYYY-Www&gt;.md<br/>(no-project fallback for /note)"]
+  end
+
+  GCfg["~/.pi/memory/config.toml<br/>(global defaults)"]
+  SCfg[".memory/config.toml<br/>(per-branch sentinel)"]
+  Env["env: ANYTHINGLLM_HOST + KEY"]
+  ALLM["AnythingLLM (read-only)<br/>fed by separate indexing"]
+
+  User --> PI
+  PI --> Hooks
+  PI --> SlashCmds
+  PI --> Tools
+  PI --> SkillDisc
+
+  SlashCmds --> Cmds
+  Tools --> ExtTools
+  SkillDisc --> Skills
+
+  Cmds --> ExtTools
+  Cmds --> Skills
+  Skills --> ExtTools
+  Hooks --> ExtTools
+
+  ExtTools --> GCfg
+  ExtTools --> SCfg
+  ExtTools --> AI
+  ExtTools --> Weekly
+  ExtTools --> ALLM
+  ALLM --> Env

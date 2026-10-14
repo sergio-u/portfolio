@@ -1,0 +1,37 @@
+---
+title: Checkpoint capture hooks
+---
+flowchart TB
+  subgraph HOOKS["PI lifecycle hooks"]
+    direction TB
+    PCOMP["session_before_compact<br/>fires: before each compaction"]
+    SEND["session_shutdown<br/>fires: session ends<br/>may emit resume line later"]
+  end
+
+  subgraph SKILLS["Skills (LLM-mediated workflows)"]
+    CK["memory-checkpoint skill<br/>output: 0-3 lines<br/>marker: auto or resume"]
+  end
+
+  subgraph ROUTING["Context-aware routing"]
+    direction TB
+    R1["if plan active -> active plan ## Log"]
+    R2["else if project active -> project notes.md"]
+    R3["else -> weekly inbox"]
+  end
+
+  subgraph FALLBACK["Alpha-stage fallback"]
+    CKMAN["/checkpoint command<br/>(--all for from-session-start)"]
+  end
+
+  PCOMP --> CK
+  SEND --> CK
+  CKMAN --> CK
+  CK --> ROUTING
+
+  classDef hook fill:#d6f5d6,stroke:#2e8b2e
+  classDef skill fill:#fff4d6,stroke:#c89b00
+  classDef manual fill:#f0f0f0,stroke:#888
+
+  class PCOMP,SEND hook
+  class CK skill
+  class CKMAN manual

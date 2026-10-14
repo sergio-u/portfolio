@@ -1,0 +1,25 @@
+# Survey material — large, mostly third-party cloned repos and external articles.
+# Not part of the design artifact; excluded from the repo.
+References/
+
+# OS noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Editor noise
+.idea/
+.vscode/
+*~
+
+# Future code artifacts (when we start implementing the extension)
+node_modules/
+dist/
+build/
+*.log
+.env
+.env.local
+
+# Per-repo sentinel (state + overrides). VCS handling is per-repo; default to ignored.
+.memory/
