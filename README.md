@@ -1,11 +1,9 @@
 # Portfolio
 
-Sergio Ugalde, senior software engineer on Microsoft's SharePoint and OneDrive
-AI Platform team. Outside work I build tools that let personal AI assistants and
+Sergio Ugalde, senior software engineer. Outside work I build tools that let personal AI assistants and
 coding agents adapt to the person using them: memory, skills, and effort routing.
 
-Each folder is a sanitized copy of a project I use day to day. Secrets, personal
-IDs, and private memories are removed or replaced with placeholders.
+Each folder is a sanitized copy of a project I use day to day.
 
 ## Projects
 
